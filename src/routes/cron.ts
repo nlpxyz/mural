@@ -62,9 +62,6 @@ router.get('/check-payments', async (req, res) => {
     where: { status: 'PENDING_PAYMENT' },
   });
 
-  console.log(`Found ${pendingOrders.length} pending orders`);
-  console.log(JSON.stringify(pendingOrders, null, 2));
-
   // Case: no pending orders, return
   // NOTE: even if we have a new payment, we should not process it until we have an order to match it to
   if (pendingOrders.length === 0) {
@@ -78,9 +75,6 @@ router.get('/check-payments', async (req, res) => {
     await muralClient.transactions.search(MURAL_ACCOUNT_ID);
 
   const unmatchedDeposits = await filterUnmatchedDeposits(transactions);
-
-  console.log(`Found ${unmatchedDeposits.length} unmatched deposits`);
-  console.log(JSON.stringify(unmatchedDeposits, null, 2));
 
   // Case: no unmatched transactions, no new deposits, return
   if (unmatchedDeposits.length === 0) {
