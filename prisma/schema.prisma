@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  externalId String   @unique
+  createdAt  DateTime @default(now())
+  orders     Order[]
+
+  @@map("customer")
+}
+
+model Product {
+  id          Int            @id @default(autoincrement())
+  name        String         @unique
+  description String?
+  priceUsdc   Float
+  createdAt   DateTime       @default(now())
+  orders  OrderProduct[]
+
+  @@map("product")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  FAILED
+}
+
+model Order {
+  id                 Int          @id @default(autoincrement())
+  customerId         Int
+  customer           Customer     @relation(fields: [customerId], references: [id])
+  status             OrderStatus  @default(PENDING_PAYMENT)
+  muralTransactionId String?      @unique
+  createdAt          DateTime     @default(now())
+  paidAt             DateTime?
+  totalUsdc          Float
+  products           OrderProduct[]
+  conversion         Conversion?
+
+  @@map("order")
+}
+
+model OrderProduct {
+  id        Int     @id @default(autoincrement())
+  quantity  Int     @default(1)
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+  @@map("orderProduct")
+}
+
+enum ConversionStatus {
+  PENDING
+  INITIATED
+  COMPLETED
+  FAILED
+}
+
+model Conversion {
+  id                   Int              @id @default(autoincrement())
+  orderId              Int              @unique
+  order                Order            @relation(fields: [orderId], references: [id])
+  muralPayoutRequestId String?
+  status               ConversionStatus @default(PENDING)
+  usdcAmount           Float
+  copAmount            Float?
+  createdAt            DateTime         @default(now())
+
+  @@map("conversion")
+}
